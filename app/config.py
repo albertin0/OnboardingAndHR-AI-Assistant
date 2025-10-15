@@ -1,5 +1,11 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+api_key = os.getenv("GROQ_API_KEY")
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
@@ -24,7 +30,7 @@ JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
 # Groq (stub placeholder)
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", api_key)
 
 # DB
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'policy_mcp.db'}")
