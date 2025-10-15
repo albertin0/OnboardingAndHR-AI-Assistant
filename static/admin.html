@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin UI — Policy MCP</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-6 font-sans">
+  <div class="max-w-3xl mx-auto bg-white rounded-xl shadow p-6">
+    <h1 class="text-2xl font-semibold mb-4">Admin Console — Company Policy</h1>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-slate-700">Admin JWT (paste here)</label>
+      <input id="jwt" class="mt-1 p-2 w-full border rounded" placeholder="Paste admin bearer token" />
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div>
+        <h2 class="font-medium">Upload Policy PDF</h2>
+        <input id="pdffile" type="file" accept="application/pdf" class="mt-2" />
+        <button id="uploadBtn" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded">Upload & Index</button>
+        <p id="uploadMsg" class="text-sm mt-2 text-slate-600"></p>
+      </div>
+
+      <div>
+        <h2 class="font-medium">Users</h2>
+        <button id="refreshUsers" class="mt-2 px-3 py-1 bg-green-600 text-white rounded">Refresh</button>
+        <div id="users" class="mt-2 space-y-2"></div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="font-medium">Logs</h2>
+      <pre id="logs" class="h-36 overflow-auto bg-slate-100 p-3 rounded text-sm"></pre>
+    </div>
+  </div>
+
+<script>
+const apiBase = "/"; // same host
+
+function log(msg) {
+  const p = document.getElementById("logs");
+  p.textContent = (new Date()).toLocaleTimeString() + " - " + msg + "\n" + p.textContent;
+}
+
+document.getElementById("refreshUsers").onclick = async () => {
+  const token = document.getElementById("jwt").value.trim();
+  if (!token) { alert("Paste admin JWT"); return; }
+  try {
+    const res = await fetch(apiBase + "admin/users", { headers: { Authorization: "Bearer " + token }});
+    if (!res.ok) { const t = await res.text(); log("Failed to fetch users: " + t); return; }
+    const users = await res.json();
+    const container = document.getElementById("users");
+    container.innerHTML = "";
+    users.forEach(u => {
+      const d = document.createElement("div");
+      d.className = "p-2 border rounded flex justify-between items-center";
+      d.innerHTML = `<div>
+          <div class="font-semibold">${u.full_name} (${u.email})</div>
+          <div class="text-sm text-slate-600">Phone: ${u.phone} • Validated: ${u.is_validated}</div>
+        </div>`;
+      const controls = document.createElement("div");
+      const approveBtn = document.createElement("button");
+      approveBtn.textContent = "Approve";
+      approveBtn.className = "px-2 py-1 bg-blue-600 text-white rounded mr-2";
+      approveBtn.onclick = async () => {
+        const r = await fetch(apiBase + "admin/validate/" + u.id + "?approve=true", { method: "POST", headers: { Authorization: "Bearer " + token }});
+        if (r.ok) { log("Approved user " + u.id); document.getElementById("refreshUsers").click(); }
+        else { log("Approve failed: " + await r.text()); }
+      };
+      const rejectBtn = document.createElement("button");
+      rejectBtn.textContent = "Reject";
+      rejectBtn.className = "px-2 py-1 bg-red-600 text-white rounded";
+      rejectBtn.onclick = async () => {
+        const r = await fetch(apiBase + "admin/validate/" + u.id + "?approve=false", { method: "POST", headers: { Authorization: "Bearer " + token }});
+        if (r.ok) { log("Rejected user " + u.id); document.getElementById("refreshUsers").click(); }
+        else { log("Reject failed: " + await r.text()); }
+      };
+      controls.appendChild(approveBtn);
+      controls.appendChild(rejectBtn);
+      d.appendChild(controls);
+      container.appendChild(d);
+    });
+    log("Users refreshed");
+  } catch (err) { log("Error: " + err); }
+};
+
+document.getElementById("uploadBtn").onclick = async () => {
+  const token = document.getElementById("jwt").value.trim();
+  if (!token) { alert("Paste admin JWT"); return; }
+  const fileInput = document.getElementById("pdffile");
+  if (!fileInput.files || !fileInput.files.length) { alert("Select a PDF"); return; }
+  const fd = new FormData();
+  fd.append("file", fileInput.files[0]);
+  log("Uploading...");
+  const res = await fetch(apiBase + "admin/upload_policy", { method: "POST", body: fd, headers: { Authorization: "Bearer " + token }});
+  if (!res.ok) { log("Upload failed: " + await res.text()); document.getElementById("uploadMsg").textContent = "Upload failed"; return; }
+  const j = await res.json();
+  document.getElementById("uploadMsg").textContent = "Uploaded: " + j.filename;
+  log("Upload OK: " + JSON.stringify(j));
+};
+</script>
+</body>
+</html>

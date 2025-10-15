@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+qdrant-client
+sentence-transformers
+PyMuPDF
+sqlmodel
+passlib[bcrypt]
+python-jose[cryptography]
+pydantic
+rich
+numpy
+fastmcp
