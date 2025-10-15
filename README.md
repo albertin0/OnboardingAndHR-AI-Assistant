@@ -7,13 +7,13 @@ Steps to run it:
 1. Create & activate Python virtual environment, install deps:
 cd C:\Users\<you>\code\OnboardingAndHR-AI-Assistant
 
-# create venv
+create venv
 python -m venv .venv
 
-# activate
+activate
 .\.venv\Scripts\Activate.ps1
 
-# upgrade pip and install packages
+upgrade pip and install packages
 python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 
@@ -25,7 +25,7 @@ Then re-run pip install -r requirements.txt if needed
 docker run -d --name qdrant -p 6333:6333 qdrant/qdrant
 
 docker ps
-# you should see the qdrant container running
+you should see the qdrant container running
 
 3. Prepare DB & create initial admin
 python create_admin.py
